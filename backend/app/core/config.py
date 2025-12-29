@@ -23,9 +23,18 @@ class Settings(BaseSettings):
         encoded_user = quote_plus(self.POSTGRES_USER)
         encoded_pass = quote_plus(self.POSTGRES_PASSWORD)
         
-        if self.POSTGRES_SERVER.startswith("/"):
+        host_val = self.POSTGRES_SERVER
+        # Detect if this is a Cloud SQL connection name (e.g. project:region:instance)
+        # or an explicit socket path
+        is_cloud_sql = ":" in host_val and "/" not in host_val and host_val not in ["localhost", "127.0.0.1"]
+        is_socket = host_val.startswith("/")
+        
+        if is_socket or is_cloud_sql:
             # Unix Socket (Cloud Run)
-            return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@/{self.POSTGRES_DB}?host={self.POSTGRES_SERVER}"
+            socket_path = host_val
+            if not socket_path.startswith("/"):
+                socket_path = f"/cloudsql/{socket_path}"
+            return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@/{self.POSTGRES_DB}?host={socket_path}"
         else:
             # TCP (Local)
             return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
