@@ -3,6 +3,7 @@ from pydantic import PostgresDsn, computed_field
 from typing import Optional
 
 import os
+from urllib.parse import quote_plus
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Dental Notes Backend"
@@ -16,8 +17,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = os.getenv("DB_NAME", "dental_notes")
     POSTGRES_PORT: int = int(os.getenv("DB_PORT", 5432))
     
-from urllib.parse import quote_plus
-    
+
     @computed_field
     def SQLALCHEMY_DATABASE_URI(self) -> str:
         encoded_user = quote_plus(self.POSTGRES_USER)
