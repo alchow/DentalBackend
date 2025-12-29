@@ -2,16 +2,19 @@ from pydantic_settings import BaseSettings
 from pydantic import PostgresDsn, computed_field
 from typing import Optional
 
+import os
+
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Dental Notes Backend"
     API_V1_STR: str = "/api/v1"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
     
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "dental_notes"
-    POSTGRES_PORT: int = 5432
+    # Allow DB_* env vars to override defaults (Cloud Run style)
+    POSTGRES_SERVER: str = os.getenv("DB_HOST", "localhost")
+    POSTGRES_USER: str = os.getenv("DB_USER", "postgres")
+    POSTGRES_PASSWORD: str = os.getenv("DB_PASS", "postgres")
+    POSTGRES_DB: str = os.getenv("DB_NAME", "dental_notes")
+    POSTGRES_PORT: int = int(os.getenv("DB_PORT", 5432))
     
     @computed_field
     def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
