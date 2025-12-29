@@ -16,16 +16,19 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = os.getenv("DB_NAME", "dental_notes")
     POSTGRES_PORT: int = int(os.getenv("DB_PORT", 5432))
     
+from urllib.parse import quote_plus
+    
     @computed_field
-    def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
-        return PostgresDsn.build(
-            scheme="postgresql+asyncpg",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_SERVER,
-            port=self.POSTGRES_PORT,
-            path=self.POSTGRES_DB,
-        )
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        encoded_user = quote_plus(self.POSTGRES_USER)
+        encoded_pass = quote_plus(self.POSTGRES_PASSWORD)
+        
+        if self.POSTGRES_SERVER.startswith("/"):
+            # Unix Socket (Cloud Run)
+            return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@/{self.POSTGRES_DB}?host={self.POSTGRES_SERVER}"
+        else:
+            # TCP (Local)
+            return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
     class Config:
         case_sensitive = True
