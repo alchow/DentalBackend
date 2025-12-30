@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Dental Notes Backend"
     API_V1_STR: str = "/api/v1"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:8080", "http://localhost:3000"]
+    API_KEY: str = os.getenv("API_KEY", "secret-key") # Change in production
     
     # Allow DB_* env vars to override defaults (Cloud Run style)
     POSTGRES_SERVER: str = os.getenv("DB_HOST", "localhost")

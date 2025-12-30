@@ -4,7 +4,7 @@ from typing import AsyncGenerator
 
 engine = create_async_engine(
     str(settings.SQLALCHEMY_DATABASE_URI),
-    echo=True, # Set to False in production
+    echo=False, # Set to False in production to avoid polluting stdout
     future=True,
 )
 

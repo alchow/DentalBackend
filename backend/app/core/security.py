@@ -24,3 +24,17 @@ def get_blind_index(data: str) -> str:
     if not data: return None
     # Use a pepper in prod
     return hashlib.sha256(data.lower().encode()).hexdigest()
+
+from fastapi import Security, HTTPException, status
+from fastapi.security import APIKeyHeader
+from app.core.config import settings
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+async def get_api_key(api_key_header: str = Security(api_key_header)):
+    if api_key_header == settings.API_KEY:
+        return api_key_header
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Could not validate credentials",
+    )

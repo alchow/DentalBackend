@@ -7,8 +7,11 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
+from app.core.security import get_api_key
+from fastapi import Depends
+
 from app.api.v1.router import api_router
-app.include_router(api_router, prefix=settings.API_V1_STR)
+app.include_router(api_router, prefix=settings.API_V1_STR, dependencies=[Depends(get_api_key)])
 
 # Set all CORS enabled origins
 if settings.BACKEND_CORS_ORIGINS:

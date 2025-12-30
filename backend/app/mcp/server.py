@@ -18,20 +18,27 @@ async def get_db_session():
 @mcp.tool()
 async def search_patients(last_name: str) -> list[dict]:
     """Search for patients by last name (exact match required for security)."""
-    async with SessionLocal() as db:
-        blind_index = get_blind_index(last_name)
-        result = await db.execute(select(Patient).filter(Patient.last_name_hash == blind_index))
-        patients = result.scalars().all()
-        
-        output = []
-        for p in patients:
-            output.append({
-                "id": str(p.id),
-                "first_name": decrypt_data(p.first_name),
-                "last_name": decrypt_data(p.last_name),
-                "dob": str(p.dob)
-            })
-        return output
+    import sys
+    import traceback
+    try:
+        async with SessionLocal() as db:
+            blind_index = get_blind_index(last_name)
+            result = await db.execute(select(Patient).filter(Patient.last_name_hash == blind_index))
+            patients = result.scalars().all()
+            
+            output = []
+            for p in patients:
+                output.append({
+                    "id": str(p.id),
+                    "first_name": decrypt_data(p.first_name),
+                    "last_name": decrypt_data(p.last_name),
+                    "dob": str(p.dob)
+                })
+            return output
+    except Exception as e:
+        print(f"ERROR in search_patients: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        raise e
 
 @mcp.tool()
 async def get_patient_history(patient_id: str) -> dict:
@@ -90,3 +97,6 @@ async def add_clinical_note(patient_id: str, content: str, author_id: str, visit
         db.add(note)
         await db.commit()
         return f"Note added with ID: {note.id}"
+
+if __name__ == "__main__":
+    mcp.run()
