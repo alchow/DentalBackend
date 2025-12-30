@@ -10,7 +10,7 @@ from app.schemas import visit_note as schemas
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.VisitResponse)
+@router.post("", response_model=schemas.VisitResponse)
 async def create_visit(visit: schemas.VisitCreate, db: AsyncSession = Depends(get_db)):
     db_visit = Visit(**visit.model_dump())
     db.add(db_visit)

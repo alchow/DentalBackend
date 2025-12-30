@@ -11,7 +11,7 @@ from app.core.security import encrypt_data, decrypt_data
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.NoteResponse)
+@router.post("", response_model=schemas.NoteResponse)
 async def create_note(note: schemas.NoteCreate, db: AsyncSession = Depends(get_db)):
     encrypted_content = encrypt_data(note.content)
     

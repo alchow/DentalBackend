@@ -10,7 +10,7 @@ from app.schemas import bill as schemas
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.BillResponse)
+@router.post("", response_model=schemas.BillResponse)
 async def create_bill(bill: schemas.BillCreate, db: AsyncSession = Depends(get_db)):
     # 1. Handle Codes
     # Find or create codes

@@ -34,3 +34,8 @@ ENV/
 
 # OS
 .DS_Store
+
+# Secrets & Binaries
+key.json
+cloud_sql_proxy
+*.log

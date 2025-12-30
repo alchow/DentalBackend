@@ -11,7 +11,7 @@ from app.core.security import encrypt_data, decrypt_data, get_blind_index
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.PatientResponse)
+@router.post("", response_model=schemas.PatientResponse)
 async def create_patient(patient: schemas.PatientCreate, db: AsyncSession = Depends(get_db)):
     # Encrypt sensitive fields
     encrypted_first = encrypt_data(patient.first_name)
@@ -54,7 +54,7 @@ async def read_patient(patient_id: UUID, db: AsyncSession = Depends(get_db)):
     patient.last_name = decrypt_data(patient.last_name)
     return patient
 
-@router.get("/search/", response_model=List[schemas.PatientResponse])
+@router.get("/search", response_model=List[schemas.PatientResponse])
 async def search_patients(last_name: str, db: AsyncSession = Depends(get_db)):
     # Use blind index
     search_hash = get_blind_index(last_name)
