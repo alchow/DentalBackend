@@ -8,7 +8,7 @@ from urllib.parse import quote_plus
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Dental Notes Backend"
     API_V1_STR: str = "/api/v1"
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:8080", "http://localhost:3000"]
     
     # Allow DB_* env vars to override defaults (Cloud Run style)
     POSTGRES_SERVER: str = os.getenv("DB_HOST", "localhost")
@@ -37,7 +37,9 @@ class Settings(BaseSettings):
             return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@/{self.POSTGRES_DB}?host={socket_path}"
         else:
             # TCP (Local)
-            return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            # When connecting via Cloud SQL Proxy on localhost, SSL is handled by the proxy.
+            # We must explicitly tell asyncpg NOT to try SSL, otherwise the handshake fails.
+            return f"postgresql+asyncpg://{encoded_user}:{encoded_pass}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}?ssl=disable"
 
     class Config:
         case_sensitive = True
