@@ -19,6 +19,7 @@ async def create_note(note: schemas.NoteCreate, db: AsyncSession = Depends(get_d
         patient_id=note.patient_id,
         visit_id=note.visit_id,
         content=encrypted_content,
+        tooth=note.tooth,
         author_id=note.author_id
     )
     db.add(db_note)
@@ -39,6 +40,7 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
     history_record = NoteHistory(
         note_id=db_note.id,
         previous_content=db_note.content, # Already encrypted
+        tooth=db_note.tooth, # Save old tooth (shouldn't change often, but history is history)
         edited_by=note_update.author_id,
         change_reason="Update" # Could come from request
     )
@@ -46,6 +48,7 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
     
     # 2. Update Note with NEW content
     db_note.content = encrypt_data(note_update.content)
+    db_note.tooth = note_update.tooth 
     db_note.author_id = note_update.author_id # Update author to last editor? Or keep creator?
     # Usually we track last modified by.
     
