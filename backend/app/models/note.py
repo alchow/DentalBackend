@@ -13,7 +13,9 @@ class Note(Base):
     patient_id = Column(UUID(as_uuid=True), ForeignKey("patients.id"), nullable=False)
     visit_id = Column(UUID(as_uuid=True), ForeignKey("visits.id"), nullable=True) # Optional
     content = Column(Text, nullable=False) # Encrypted
-    tooth = Column(String, nullable=True) # Metadata: "19", "FM"
+    area_of_oral_cavity = Column(String, nullable=True)
+    tooth_number = Column(String, nullable=True)
+    surface_ids = Column(String, nullable=True)
     author_id = Column(String, nullable=False) # Provider ID
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -29,7 +31,9 @@ class NoteHistory(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
     note_id = Column(UUID(as_uuid=True), ForeignKey("notes.id"), nullable=False)
     previous_content = Column(Text, nullable=False) # Encrypted
-    tooth = Column(String, nullable=True) # Snapshot of tooth at time of edit
+    area_of_oral_cavity = Column(String, nullable=True)
+    tooth_number = Column(String, nullable=True)
+    surface_ids = Column(String, nullable=True)
     edited_by = Column(String, nullable=False) # User ID
     edited_at = Column(DateTime(timezone=True), server_default=func.now())
     change_reason = Column(String, nullable=True)

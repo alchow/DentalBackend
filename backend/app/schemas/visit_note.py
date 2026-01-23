@@ -34,7 +34,9 @@ class VisitResponse(VisitBase):
 
 class NoteBase(BaseModel):
     content: str
-    tooth: Optional[str] = None # Added for schema refinement
+    area_of_oral_cavity: Optional[str] = None
+    tooth_number: Optional[str] = None
+    surface_ids: Optional[str] = None
     author_id: str
     patient_id: UUID
     visit_id: Optional[UUID] = None
@@ -44,7 +46,9 @@ class NoteCreate(NoteBase):
 
 class NoteUpdate(BaseModel):
     content: str # Always require full content for update logic implementation
-    tooth: Optional[str] = None
+    area_of_oral_cavity: Optional[str] = None
+    tooth_number: Optional[str] = None
+    surface_ids: Optional[str] = None
     author_id: str # Confirm identity
 
 class NoteResponse(NoteBase):
