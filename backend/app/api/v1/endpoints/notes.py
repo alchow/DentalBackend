@@ -19,8 +19,6 @@ async def create_note(note: schemas.NoteCreate, db: AsyncSession = Depends(get_d
         patient_id=note.patient_id,
         visit_id=note.visit_id,
         content=encrypted_content,
-        visit_id=note.visit_id,
-        content=encrypted_content,
         area_of_oral_cavity=note.area_of_oral_cavity,
         tooth_number=note.tooth_number,
         surface_ids=note.surface_ids,
@@ -44,7 +42,6 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
     history_record = NoteHistory(
         note_id=db_note.id,
         previous_content=db_note.content, # Already encrypted
-        previous_content=db_note.content, # Already encrypted
         area_of_oral_cavity=db_note.area_of_oral_cavity,
         tooth_number=db_note.tooth_number,
         surface_ids=db_note.surface_ids,
@@ -54,7 +51,6 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
     db.add(history_record)
     
     # 2. Update Note with NEW content
-    db_note.content = encrypt_data(note_update.content)
     db_note.content = encrypt_data(note_update.content)
     db_note.area_of_oral_cavity = note_update.area_of_oral_cavity
     db_note.tooth_number = note_update.tooth_number
