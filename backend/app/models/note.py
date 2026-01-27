@@ -16,6 +16,7 @@ class Note(Base):
     area_of_oral_cavity = Column(String, nullable=True)
     tooth_number = Column(String, nullable=True)
     surface_ids = Column(String, nullable=True)
+    note_type = Column(String, nullable=True, default="GENERAL") # Added for UI tabs
     author_id = Column(String, nullable=False) # Provider ID
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -34,6 +35,7 @@ class NoteHistory(Base):
     area_of_oral_cavity = Column(String, nullable=True)
     tooth_number = Column(String, nullable=True)
     surface_ids = Column(String, nullable=True)
+    note_type = Column(String, nullable=True) # Snapshot
     edited_by = Column(String, nullable=False) # User ID
     edited_at = Column(DateTime(timezone=True), server_default=func.now())
     change_reason = Column(String, nullable=True)

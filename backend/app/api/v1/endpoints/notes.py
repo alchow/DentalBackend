@@ -22,11 +22,18 @@ async def create_note(note: schemas.NoteCreate, db: AsyncSession = Depends(get_d
         area_of_oral_cavity=note.area_of_oral_cavity,
         tooth_number=note.tooth_number,
         surface_ids=note.surface_ids,
+        note_type=note.note_type,
         author_id=note.author_id
     )
     db.add(db_note)
     await db.commit()
     await db.refresh(db_note)
+    
+    # Index Note for Search (Async/Background ideally, but blocking here for MVP)
+    from app.services.search_service import SearchService
+    search_service = SearchService(db)
+    # We pass the CLEARTEXT content for indexing
+    await search_service.index_note(db_note.id, note.content)
     
     db_note.content = note.content # Return decrypted
     return db_note
@@ -45,6 +52,7 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
         area_of_oral_cavity=db_note.area_of_oral_cavity,
         tooth_number=db_note.tooth_number,
         surface_ids=db_note.surface_ids,
+        note_type=db_note.note_type,
         edited_by=note_update.author_id,
         change_reason="Update" # Could come from request
     )
@@ -55,8 +63,14 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
     db_note.area_of_oral_cavity = note_update.area_of_oral_cavity
     db_note.tooth_number = note_update.tooth_number
     db_note.surface_ids = note_update.surface_ids
+    if note_update.note_type:
+        db_note.note_type = note_update.note_type
     db_note.author_id = note_update.author_id # Update author to last editor? Or keep creator?
-    # Usually we track last modified by.
+    
+    # Index Update for Search
+    from app.services.search_service import SearchService
+    search_service = SearchService(db)
+    await search_service.index_note(db_note.id, note_update.content)
     
     await db.commit()
     await db.refresh(db_note)

@@ -15,6 +15,7 @@ class Patient(Base):
     last_name_hash = Column(String, index=True, nullable=False) # Blind Index for search
     dob = Column(Date, nullable=False)
     contact_info = Column(JSONB, nullable=True) # Encrypted JSON
+    medical_history = Column(JSONB, nullable=True) # Allergies, Meds (JSON)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())

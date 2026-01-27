@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:8080", "http://localhost:3000"]
     API_KEY: str = os.getenv("API_KEY", "secret-key") # Change in production
+    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY") # Required for Search
     
     # Allow DB_* env vars to override defaults (Cloud Run style)
     POSTGRES_SERVER: str = os.getenv("DB_HOST", "localhost")

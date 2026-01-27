@@ -13,6 +13,7 @@ class PatientBase(BaseModel):
     last_name: str
     dob: date
     contact_info: Optional[ContactInfo] = None
+    medical_history: Optional[dict] = None # Allergies, Meds
 
 class PatientCreate(PatientBase):
     pass
@@ -22,6 +23,7 @@ class PatientUpdate(BaseModel):
     last_name: Optional[str] = None
     dob: Optional[date] = None
     contact_info: Optional[ContactInfo] = None
+    medical_history: Optional[dict] = None
 
 class PatientResponse(PatientBase):
     id: UUID

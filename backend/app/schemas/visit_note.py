@@ -14,6 +14,7 @@ class VisitBase(BaseModel):
     visit_date: datetime
     reason: Optional[str] = None
     status: VisitStatus = VisitStatus.SCHEDULED
+    summary: Optional[dict] = None
     patient_id: UUID
 
 class VisitCreate(VisitBase):
@@ -23,6 +24,7 @@ class VisitUpdate(BaseModel):
     visit_date: Optional[datetime] = None
     reason: Optional[str] = None
     status: Optional[VisitStatus] = None
+    summary: Optional[dict] = None
 
 class VisitResponse(VisitBase):
     id: UUID
@@ -37,6 +39,7 @@ class NoteBase(BaseModel):
     area_of_oral_cavity: Optional[str] = None
     tooth_number: Optional[str] = None
     surface_ids: Optional[str] = None
+    note_type: str = "GENERAL"
     author_id: str
     patient_id: UUID
     visit_id: Optional[UUID] = None
@@ -49,6 +52,7 @@ class NoteUpdate(BaseModel):
     area_of_oral_cavity: Optional[str] = None
     tooth_number: Optional[str] = None
     surface_ids: Optional[str] = None
+    note_type: Optional[str] = None
     author_id: str # Confirm identity
 
 class NoteResponse(NoteBase):

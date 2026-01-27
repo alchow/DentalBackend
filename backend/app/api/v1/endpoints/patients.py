@@ -30,7 +30,8 @@ async def create_patient(patient: schemas.PatientCreate, db: AsyncSession = Depe
         last_name=encrypted_last,
         last_name_hash=blind_index,
         dob=patient.dob,
-        contact_info=patient.contact_info.model_dump() if patient.contact_info else None
+        contact_info=patient.contact_info.model_dump() if patient.contact_info else None,
+        medical_history=patient.medical_history
     )
     db.add(db_patient)
     await db.commit()
@@ -40,6 +41,34 @@ async def create_patient(patient: schemas.PatientCreate, db: AsyncSession = Depe
     db_patient.first_name = patient.first_name
     db_patient.last_name = patient.last_name
     
+    return db_patient
+
+@router.put("/{patient_id}", response_model=schemas.PatientResponse)
+async def update_patient(patient_id: UUID, patient_update: schemas.PatientUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Patient).filter(Patient.id == patient_id))
+    db_patient = result.scalars().first()
+    if not db_patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+
+    if patient_update.first_name:
+        db_patient.first_name = encrypt_data(patient_update.first_name)
+    if patient_update.last_name:
+        db_patient.last_name = encrypt_data(patient_update.last_name)
+        db_patient.last_name_hash = get_blind_index(patient_update.last_name)
+    if patient_update.dob:
+        db_patient.dob = patient_update.dob
+    if patient_update.contact_info:
+        db_patient.contact_info = patient_update.contact_info.model_dump()
+    if patient_update.medical_history is not None: # check against None specifically to allow clearing? or just updating
+        db_patient.medical_history = patient_update.medical_history
+
+    await db.commit()
+    await db.refresh(db_patient)
+
+    # Decrypt for response
+    db_patient.first_name = decrypt_data(db_patient.first_name)
+    db_patient.last_name = decrypt_data(db_patient.last_name)
+
     return db_patient
 
 @router.get("/{patient_id}", response_model=schemas.PatientResponse)
