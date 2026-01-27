@@ -25,4 +25,5 @@ ENV PYTHONPATH=/service/backend
 ENV PORT=8080
 
 # Run uvicorn (host 0.0.0.0 is critical for containers)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Run uvicorn using shell form to allow variable expansion
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"
