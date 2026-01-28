@@ -1,8 +1,9 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Enum, Numeric, Table
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, DateTime, ForeignKey, Numeric, Enum, Integer, Table
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import uuid
+from datetime import datetime, timezone
 import enum
 
 from app.db.base_class import Base
@@ -36,8 +37,10 @@ class Bill(Base):
     amount = Column(Numeric(10, 2), nullable=False)
     status = Column(Enum(BillStatus), default=BillStatus.PENDING, nullable=False)
     
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    
+    office_id = Column(UUID(as_uuid=True), ForeignKey("offices.id"), nullable=True)
 
     patient = relationship("Patient", back_populates="bills")
     visit = relationship("Visit", back_populates="bills")

@@ -5,3 +5,6 @@ from .bill import Bill, CdtCode
 from .task import Task
 from .quick_phrase import QuickPhrase
 from .search import NoteEmbedding, BlindIndex
+from .office import Office
+from .user import User
+from .api_key import ApiKey

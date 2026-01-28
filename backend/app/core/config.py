@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     API_KEY: str = os.getenv("API_KEY", "secret-key") # Change in production
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY") # Required for Search
     
+    # JWT Settings
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-key-change-it")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8 # 8 days
+    
+    
     # Allow DB_* env vars to override defaults (Cloud Run style)
     POSTGRES_SERVER: str = os.getenv("DB_HOST", "localhost")
     POSTGRES_USER: str = os.getenv("DB_USER", "postgres")

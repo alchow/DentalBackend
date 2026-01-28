@@ -5,14 +5,20 @@ from typing import List
 from uuid import UUID
 
 from app.db.session import get_db
-from app.models import Note, NoteHistory
+from app.models import Note, NoteHistory, User
 from app.schemas import visit_note as schemas
 from app.core.security import encrypt_data, decrypt_data
+from app.api.deps import get_current_tenant_id, get_current_user
 
 router = APIRouter()
 
 @router.post("", response_model=schemas.NoteResponse)
-async def create_note(note: schemas.NoteCreate, db: AsyncSession = Depends(get_db)):
+async def create_note(
+    note: schemas.NoteCreate, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id),
+    current_user: User = Depends(get_current_user)
+):
     encrypted_content = encrypt_data(note.content)
     
     db_note = Note(
@@ -23,24 +29,30 @@ async def create_note(note: schemas.NoteCreate, db: AsyncSession = Depends(get_d
         tooth_number=note.tooth_number,
         surface_ids=note.surface_ids,
         note_type=note.note_type,
-        author_id=note.author_id
+        author_id=current_user.email, # Use authenticated user email/name as author
+        office_id=tenant_id
     )
     db.add(db_note)
     await db.commit()
     await db.refresh(db_note)
     
-    # Index Note for Search (Async/Background ideally, but blocking here for MVP)
+    # Index Note for Search
     from app.services.search_service import SearchService
     search_service = SearchService(db)
-    # We pass the CLEARTEXT content for indexing
     await search_service.index_note(db_note.id, note.content)
     
     db_note.content = note.content # Return decrypted
     return db_note
 
 @router.put("/{note_id}", response_model=schemas.NoteResponse)
-async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Note).filter(Note.id == note_id))
+async def update_note(
+    note_id: UUID, 
+    note_update: schemas.NoteUpdate, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id),
+    current_user: User = Depends(get_current_user)
+):
+    result = await db.execute(select(Note).filter(Note.id == note_id, Note.office_id == tenant_id))
     db_note = result.scalars().first()
     if not db_note:
         raise HTTPException(status_code=404, detail="Note not found")
@@ -53,8 +65,9 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
         tooth_number=db_note.tooth_number,
         surface_ids=db_note.surface_ids,
         note_type=db_note.note_type,
-        edited_by=note_update.author_id,
-        change_reason="Update" # Could come from request
+        edited_by=current_user.email, # Use authenticated user
+        change_reason="Update",
+        office_id=tenant_id
     )
     db.add(history_record)
     
@@ -65,7 +78,11 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
     db_note.surface_ids = note_update.surface_ids
     if note_update.note_type:
         db_note.note_type = note_update.note_type
-    db_note.author_id = note_update.author_id # Update author to last editor? Or keep creator?
+    
+    # Helper logic: Note author usually stays the same, or we track "last_edited_by" in a separate column if model supports it.
+    # Note model has `updated_at`. `author_id` is usually the creator.
+    # We won't change `author_id` here unless business req says so. 
+    # But for now, let's leave author_id as creator.
     
     # Index Update for Search
     from app.services.search_service import SearchService
@@ -79,8 +96,12 @@ async def update_note(note_id: UUID, note_update: schemas.NoteUpdate, db: AsyncS
     return db_note
 
 @router.get("/patient/{patient_id}", response_model=List[schemas.NoteResponse])
-async def read_patient_notes(patient_id: UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Note).filter(Note.patient_id == patient_id))
+async def read_patient_notes(
+    patient_id: UUID, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
+    result = await db.execute(select(Note).filter(Note.patient_id == patient_id, Note.office_id == tenant_id))
     notes = result.scalars().all()
     
     for n in notes:

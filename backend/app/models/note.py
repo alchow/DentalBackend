@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import uuid
+from datetime import datetime, timezone
 
 from app.db.base_class import Base
 
@@ -17,10 +18,12 @@ class Note(Base):
     tooth_number = Column(String, nullable=True)
     surface_ids = Column(String, nullable=True)
     note_type = Column(String, nullable=True, default="GENERAL") # Added for UI tabs
-    author_id = Column(String, nullable=False) # Provider ID
+    author_id = Column(String, nullable=True) # Provider ID
     
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    office_id = Column(UUID(as_uuid=True), ForeignKey("offices.id"), nullable=True)
 
     patient = relationship("Patient", back_populates="notes")
     visit = relationship("Visit", back_populates="notes")
@@ -36,8 +39,10 @@ class NoteHistory(Base):
     tooth_number = Column(String, nullable=True)
     surface_ids = Column(String, nullable=True)
     note_type = Column(String, nullable=True) # Snapshot
-    edited_by = Column(String, nullable=False) # User ID
-    edited_at = Column(DateTime(timezone=True), server_default=func.now())
+    edited_by = Column(String, nullable=True) # User ID or Name
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     change_reason = Column(String, nullable=True)
+
+    office_id = Column(UUID(as_uuid=True), ForeignKey("offices.id"), nullable=True)
 
     note = relationship("Note", back_populates="history")

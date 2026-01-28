@@ -1,8 +1,9 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Date
+from sqlalchemy import Column, String, DateTime, Date, Enum, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import uuid
+from datetime import datetime, timezone
 
 from app.db.base_class import Base
 
@@ -17,5 +18,7 @@ class Task(Base):
     due_date = Column(Date, nullable=True)
     generated_by = Column(String, nullable=True) # LLM or User
     
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
+    
+    office_id = Column(UUID(as_uuid=True), ForeignKey("offices.id"), nullable=True)

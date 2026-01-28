@@ -68,22 +68,25 @@ class SearchService:
             
         await self.db.commit()
 
-    async def search_notes(self, query: str, limit: int = 10) -> List[UUID]:
+    async def search_notes(self, query: str, tenant_id: UUID, limit: int = 10) -> List[UUID]:
         """
         Hybrid Search:
         1. Keyword Match (Blind Index)
         2. Semantic Match (Vector Cosine Similarity)
-        Returns list of unique Note IDs.
+        Returns list of unique Note IDs belonging to the tenant.
         """
         note_ids = set()
 
         # 1. Keyword Search
         query_hashes = self._tokenize_and_hash(query)
         if query_hashes:
-            # Find notes that contain ANY of the query terms
-            # Note: This is a loose match. Ideally we want matches that overlap most.
-            # For MVP, just finding presence is fine.
-            stmt = select(BlindIndex.note_id).filter(BlindIndex.term_hash.in_(query_hashes))
+            # Join with Note to filter by office_id
+            stmt = (
+                select(BlindIndex.note_id)
+                .join(Note, BlindIndex.note_id == Note.id)
+                .filter(BlindIndex.term_hash.in_(query_hashes))
+                .filter(Note.office_id == tenant_id)
+            )
             result = await self.db.execute(stmt)
             keyword_matches = result.scalars().all()
             for nid in keyword_matches:
@@ -92,12 +95,14 @@ class SearchService:
         # 2. Semantic Search
         vector = self._get_embedding(query)
         if vector:
-            # Using pgvector cosine distance definition (<-> is Euclidean, <=> is Cosine)
-            # SQLAlchemy pgvector helper usage: NoteEmbedding.vector.l2_distance(vector) etc.
-            # We want cosine distance usually for embeddings.
-            # Note: 1 - cosine_similarity = cosine_distance. 
-            # We want smallest distance.
-            stmt = select(NoteEmbedding.note_id).order_by(NoteEmbedding.vector.cosine_distance(vector)).limit(limit)
+            # Join with Note to filter by office_id
+            stmt = (
+                select(NoteEmbedding.note_id)
+                .join(Note, NoteEmbedding.note_id == Note.id)
+                .filter(Note.office_id == tenant_id)
+                .order_by(NoteEmbedding.vector.cosine_distance(vector))
+                .limit(limit)
+            )
             result = await self.db.execute(stmt)
             semantic_matches = result.scalars().all()
             for nid in semantic_matches:

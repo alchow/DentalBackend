@@ -7,14 +7,20 @@ from uuid import UUID
 from app.db.session import get_db
 from app.models import QuickPhrase
 from app.schemas import quick_phrase as schemas
+from app.api.deps import get_current_tenant_id
 
 router = APIRouter()
 
 @router.post("", response_model=schemas.QuickPhraseResponse)
-async def create_quick_phrase(phrase: schemas.QuickPhraseCreate, db: AsyncSession = Depends(get_db)):
+async def create_quick_phrase(
+    phrase: schemas.QuickPhraseCreate, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
     db_phrase = QuickPhrase(
         text=phrase.text,
-        category=phrase.category
+        category=phrase.category,
+        office_id=tenant_id
     )
     db.add(db_phrase)
     await db.commit()
@@ -22,16 +28,25 @@ async def create_quick_phrase(phrase: schemas.QuickPhraseCreate, db: AsyncSessio
     return db_phrase
 
 @router.get("", response_model=List[schemas.QuickPhraseResponse])
-async def read_quick_phrases(category: str = None, db: AsyncSession = Depends(get_db)):
-    query = select(QuickPhrase)
+async def read_quick_phrases(
+    category: str = None, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
+    query = select(QuickPhrase).filter(QuickPhrase.office_id == tenant_id)
     if category:
         query = query.filter(QuickPhrase.category == category)
     result = await db.execute(query)
     return result.scalars().all()
 
 @router.put("/{phrase_id}", response_model=schemas.QuickPhraseResponse)
-async def update_quick_phrase(phrase_id: UUID, phrase_update: schemas.QuickPhraseUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(QuickPhrase).filter(QuickPhrase.id == phrase_id))
+async def update_quick_phrase(
+    phrase_id: UUID, 
+    phrase_update: schemas.QuickPhraseUpdate, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
+    result = await db.execute(select(QuickPhrase).filter(QuickPhrase.id == phrase_id, QuickPhrase.office_id == tenant_id))
     db_phrase = result.scalars().first()
     if not db_phrase:
         raise HTTPException(status_code=404, detail="Quick Phrase not found")
@@ -48,8 +63,12 @@ async def update_quick_phrase(phrase_id: UUID, phrase_update: schemas.QuickPhras
     return db_phrase
 
 @router.delete("/{phrase_id}", status_code=204)
-async def delete_quick_phrase(phrase_id: UUID, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(QuickPhrase).filter(QuickPhrase.id == phrase_id))
+async def delete_quick_phrase(
+    phrase_id: UUID, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
+    result = await db.execute(select(QuickPhrase).filter(QuickPhrase.id == phrase_id, QuickPhrase.office_id == tenant_id))
     db_phrase = result.scalars().first()
     if not db_phrase:
         raise HTTPException(status_code=404, detail="Quick Phrase not found")

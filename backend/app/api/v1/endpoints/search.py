@@ -10,6 +10,7 @@ from app.models import Note
 from app.schemas import visit_note as schemas
 from app.core.security import decrypt_data
 from sqlalchemy import select
+from app.api.deps import get_current_tenant_id
 
 router = APIRouter()
 
@@ -18,16 +19,21 @@ class SearchQuery(BaseModel):
     limit: Optional[int] = 10
 
 @router.post("", response_model=List[schemas.NoteResponse])
-async def search_notes(query: SearchQuery, db: AsyncSession = Depends(get_db)):
+async def search_notes(
+    query: SearchQuery, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
     service = SearchService(db)
-    note_ids = await service.search_notes(query.query, query.limit)
+    note_ids = await service.search_notes(query.query, tenant_id=tenant_id, limit=query.limit)
     
     if not note_ids:
         return []
         
     # Fetch full notes
     # We must decrypt them before returning
-    stmt = select(Note).filter(Note.id.in_(note_ids))
+    # Also enforce tenant filter here just in case, though search service should have handled it.
+    stmt = select(Note).filter(Note.id.in_(note_ids), Note.office_id == tenant_id)
     result = await db.execute(stmt)
     notes = result.scalars().all()
     
