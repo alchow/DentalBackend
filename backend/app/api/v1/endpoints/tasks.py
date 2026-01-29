@@ -41,6 +41,7 @@ async def read_patient_tasks(
     return result.scalars().all()
 
 @router.put("/{task_id}", response_model=schemas.TaskResponse)
+@router.patch("/{task_id}", response_model=schemas.TaskResponse)
 async def update_task(
     task_id: UUID, 
     task_update: schemas.TaskUpdate, 

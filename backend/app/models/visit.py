@@ -13,6 +13,7 @@ class VisitStatus(str, enum.Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
+    DELETED = "DELETED"  # Soft delete for mistakes
 
 class Visit(Base):
     __tablename__ = "visits"

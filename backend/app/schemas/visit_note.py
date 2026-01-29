@@ -9,6 +9,7 @@ class VisitStatus(str, Enum):
     IN_PROGRESS = "IN_PROGRESS"
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
+    DELETED = "DELETED"  # Soft delete for mistakes
 
 class VisitBase(BaseModel):
     visit_date: datetime

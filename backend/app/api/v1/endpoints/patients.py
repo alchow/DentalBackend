@@ -44,6 +44,7 @@ async def create_patient(
     return db_patient
 
 @router.put("/{patient_id}", response_model=schemas.PatientResponse)
+@router.patch("/{patient_id}", response_model=schemas.PatientResponse)
 async def update_patient(
     patient_id: UUID, 
     patient_update: schemas.PatientUpdate, 
