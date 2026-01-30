@@ -9,8 +9,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '20260129_add_deleted_to_visitstatus'
-down_revision = '20260127_1824_add_multi_tenancy_tables'
+revision = 'add_deleted_enum'
+down_revision = 'b45198b26479'
 branch_labels = None
 depends_on = None
 
