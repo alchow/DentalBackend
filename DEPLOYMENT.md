@@ -51,7 +51,7 @@ gcloud run deploy dental-backend \
   --region us-central1 \
   --platform managed \
   --add-cloudsql-instances dentaldb-482716:us-central1:dentaldb \
-  --update-env-vars DB_HOST=/cloudsql/dentaldb-482716:us-central1:dentaldb,DB_TYPE=postgres,DB_USER=postgres,DB_NAME=dental_db
+  --update-env-vars DB_HOST=/cloudsql/dentaldb-482716:us-central1:dentaldb,DB_TYPE=postgres,DB_USER=dental_user,DB_NAME=dental_db
 ```
 
 > **Note**: This command uses `--update-env-vars` to ensure we do **not** overwrite the sensitive secrets (`DB_PASS`, `KEYS`) matched in the active revision.
