@@ -35,6 +35,11 @@ async def get_current_tenant_id(
         api_key_obj = result.scalars().first()
         
         if api_key_obj and api_key_obj.is_active:
+            # Check if Office is archived
+            office_result = await db.execute(select(Office).filter(Office.id == api_key_obj.office_id))
+            office = office_result.scalars().first()
+            if office and office.is_archived:
+                raise HTTPException(status_code=403, detail="This office has been archived")
             return api_key_obj.office_id
         # If key provided but invalid, we might want to fail fast, but let's fall through
         # implementation detail: if key is wrong, request is unauthorized regardless of JWT?
@@ -54,6 +59,15 @@ async def get_current_tenant_id(
             user = result.scalars().first()
             if not user or not user.is_active:
                  raise HTTPException(status_code=403, detail="User not found or inactive")
+            
+            # Check if user or office is archived
+            if user.is_archived:
+                raise HTTPException(status_code=403, detail="This user account has been archived")
+            
+            office_result = await db.execute(select(Office).filter(Office.id == user.office_id))
+            office = office_result.scalars().first()
+            if office and office.is_archived:
+                raise HTTPException(status_code=403, detail="This office has been archived")
             
             return user.office_id
             
@@ -90,4 +104,6 @@ async def get_current_user(
         raise HTTPException(status_code=404, detail="User not found")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    if user.is_archived:
+        raise HTTPException(status_code=403, detail="This user account has been archived")
     return user

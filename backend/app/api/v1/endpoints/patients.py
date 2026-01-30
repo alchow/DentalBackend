@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
@@ -42,6 +42,32 @@ async def create_patient(
     db_patient.last_name = patient.last_name
     
     return db_patient
+
+
+@router.get("", response_model=List[schemas.PatientResponse])
+async def list_patients(
+    limit: int = Query(50, ge=1, le=100, description="Number of items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
+    """List all active patients for the office with pagination."""
+    result = await db.execute(
+        select(Patient)
+        .filter(Patient.office_id == tenant_id, Patient.is_active == True)
+        .order_by(Patient.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    )
+    patients = result.scalars().all()
+    
+    # Decrypt all patient names
+    for p in patients:
+        p.first_name = decrypt_data(p.first_name)
+        p.last_name = decrypt_data(p.last_name)
+    
+    return patients
+
 
 @router.put("/{patient_id}", response_model=schemas.PatientResponse)
 @router.patch("/{patient_id}", response_model=schemas.PatientResponse)

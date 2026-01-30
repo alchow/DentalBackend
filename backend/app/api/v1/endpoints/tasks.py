@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from app.db.session import get_db
@@ -30,6 +30,25 @@ async def create_task(
     await db.commit()
     await db.refresh(db_task)
     return db_task
+
+@router.get("", response_model=List[schemas.TaskResponse])
+async def list_tasks(
+    status: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100, description="Number of items to return"),
+    offset: int = Query(0, ge=0, description="Number of items to skip"),
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
+    """List all tasks for the office with optional status filter and pagination."""
+    query = select(Task).filter(Task.office_id == tenant_id)
+    
+    if status:
+        query = query.filter(Task.status == status)
+    
+    query = query.order_by(Task.created_at.desc()).offset(offset).limit(limit)
+    result = await db.execute(query)
+    return result.scalars().all()
+
 
 @router.get("/patient/{patient_id}", response_model=List[schemas.TaskResponse])
 async def read_patient_tasks(

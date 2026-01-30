@@ -1,0 +1,32 @@
+steps:
+  # 1. Build Container
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dental-backend', '.']
+
+  # 2. Push to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/dental-backend']
+
+  # 3. Deploy to Cloud Run
+  # Note: This command updates the image and non-sensitive config.
+  # It preserves existing secrets (DB_PASS, SECRET_KEY, ENCRYPTION_KEY) already set on the service.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'dental-backend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/dental-backend'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--add-cloudsql-instances'
+      - 'dentaldb-482716:us-central1:dentaldb'
+      # Only update non-sensitive connection details.
+      # SENSITIVE variables (DB_PASS, KEYS) are preserved from the existing deployment.
+      - '--update-env-vars'
+      - 'DB_HOST=/cloudsql/dentaldb-482716:us-central1:dentaldb,DB_TYPE=postgres,DB_USER=postgres,DB_NAME=dental_db'
+images:
+  - 'gcr.io/$PROJECT_ID/dental-backend'

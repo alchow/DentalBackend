@@ -1,0 +1,94 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/client-name: gcloud
+    run.googleapis.com/client-version: 554.0.0
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+    run.googleapis.com/maxScale: '20'
+    run.googleapis.com/operation-id: 04f0f2a4-2188-4bc2-bb98-0889eb002697
+    run.googleapis.com/urls: '["https://dental-backend-963321342744.us-central1.run.app","https://dental-backend-2iw4ademaa-uc.a.run.app"]'
+    serving.knative.dev/creator: alcchow@gmail.com
+    serving.knative.dev/lastModifier: alcchow@gmail.com
+  creationTimestamp: '2026-01-27T06:38:14.924363Z'
+  generation: 6
+  labels:
+    cloud.googleapis.com/location: us-central1
+  name: dental-backend
+  namespace: '963321342744'
+  resourceVersion: AAZJiNr8GsQ
+  selfLink: /apis/serving.knative.dev/v1/namespaces/963321342744/services/dental-backend
+  uid: 91929f5e-6b7f-4498-969b-d973401f5827
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '20'
+        run.googleapis.com/client-name: gcloud
+        run.googleapis.com/client-version: 554.0.0
+        run.googleapis.com/cloudsql-instances: dentaldb-482716:us-central1:dentaldb
+        run.googleapis.com/startup-cpu-boost: 'true'
+      labels:
+        client.knative.dev/nonce: ajygtpxipc
+        run.googleapis.com/startupProbeType: Default
+    spec:
+      containerConcurrency: 80
+      containers:
+      - env:
+        - name: DB_TYPE
+          value: postgres
+        - name: DB_USER
+          value: dental_user
+        - name: DB_PASS
+          value: 4NNLUORbtL!vWRtLec6X1
+        - name: DB_HOST
+          value: /cloudsql/dentaldb-482716:us-central1:dentaldb
+        - name: DB_PORT
+          value: '5432'
+        - name: DB_NAME
+          value: dental_db
+        - name: ENCRYPTION_KEY
+          value: 57VtU9YMXIPsKg9sAG9ntf_uj7UNnBgxl6QJ-6dXJIo=
+        - name: SECRET_KEY
+          value: 389680bb3760fddd3aabb9f420d661534cfb309bd09b689f36f7baf7a0ab39b3
+        image: gcr.io/dentaldb-482716/dental-backend
+        ports:
+        - containerPort: 8080
+          name: http1
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        startupProbe:
+          failureThreshold: 1
+          periodSeconds: 240
+          tcpSocket:
+            port: 8080
+          timeoutSeconds: 240
+      serviceAccountName: 963321342744-compute@developer.gserviceaccount.com
+      timeoutSeconds: 300
+  traffic:
+  - latestRevision: true
+    percent: 100
+status:
+  address:
+    url: https://dental-backend-2iw4ademaa-uc.a.run.app
+  conditions:
+  - lastTransitionTime: '2026-01-29T15:53:18.598852Z'
+    status: 'True'
+    type: Ready
+  - lastTransitionTime: '2026-01-29T15:53:09.982573Z'
+    status: 'True'
+    type: ConfigurationsReady
+  - lastTransitionTime: '2026-01-29T15:53:18.555292Z'
+    status: 'True'
+    type: RoutesReady
+  latestCreatedRevisionName: dental-backend-00006-mpv
+  latestReadyRevisionName: dental-backend-00006-mpv
+  observedGeneration: 6
+  traffic:
+  - latestRevision: true
+    percent: 100
+    revisionName: dental-backend-00006-mpv
+  url: https://dental-backend-2iw4ademaa-uc.a.run.app

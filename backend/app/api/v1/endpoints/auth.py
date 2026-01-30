@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +11,7 @@ from app.core import security
 from app.core.config import settings
 from app.models import User, Office, ApiKey
 from app.schemas import auth as schemas
+from app.schemas import archive as archive_schemas
 from app.api import deps
 
 router = APIRouter()
@@ -20,8 +21,13 @@ async def register(
     data: schemas.RegisterRequest, 
     db: AsyncSession = Depends(get_db)
 ) -> Any:
-    # 1. Check if user exists
-    result = await db.execute(select(User).filter(User.email == data.user.email))
+    # 1. Check if ACTIVE (non-archived) user exists with this email
+    result = await db.execute(
+        select(User).filter(
+            User.email == data.user.email,
+            User.is_archived == False
+        )
+    )
     if result.scalars().first():
         raise HTTPException(
             status_code=400,
@@ -67,15 +73,26 @@ async def login(
     login_data: schemas.UserLogin, 
     db: AsyncSession = Depends(get_db)
 ) -> Any:
-    # 1. Fetch User
-    result = await db.execute(select(User).filter(User.email == login_data.email))
+    # 1. Fetch User (only non-archived)
+    result = await db.execute(
+        select(User).filter(
+            User.email == login_data.email,
+            User.is_archived == False
+        )
+    )
     user = result.scalars().first()
     
-    # 2. Validate
+    # 2. Validate credentials
     if not user or not security.verify_password(login_data.password, user.hashed_password):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    
+    # 3. Check if office is archived
+    office_result = await db.execute(select(Office).filter(Office.id == user.office_id))
+    office = office_result.scalars().first()
+    if office and office.is_archived:
+        raise HTTPException(status_code=403, detail="This office has been archived")
         
     # 3. Generate Token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -126,3 +143,68 @@ async def list_api_keys(
     result = await db.execute(select(ApiKey).filter(ApiKey.office_id == current_user.office_id))
     keys = result.scalars().all()
     return keys
+
+
+@router.post("/archive-office", response_model=archive_schemas.ArchiveOfficeResponse)
+async def archive_office(
+    request: archive_schemas.ArchiveOfficeRequest,
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    Archive the current user's office and all associated data.
+    Only ADMIN users can perform this action.
+    """
+    # 1. Check if user is ADMIN
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=403,
+            detail="Only ADMIN users can archive an office"
+        )
+    
+    # 2. Fetch the office
+    office_result = await db.execute(select(Office).filter(Office.id == current_user.office_id))
+    office = office_result.scalars().first()
+    
+    if not office:
+        raise HTTPException(status_code=404, detail="Office not found")
+    
+    if office.is_archived:
+        raise HTTPException(status_code=400, detail="Office is already archived")
+    
+    # 3. Archive all users in this office
+    users_result = await db.execute(
+        select(User).filter(User.office_id == office.id, User.is_archived == False)
+    )
+    users = users_result.scalars().all()
+    users_archived_count = 0
+    
+    now = datetime.now(timezone.utc)
+    for user in users:
+        user.is_archived = True
+        user.archived_at = now
+        users_archived_count += 1
+    
+    # 4. Deactivate all API keys for this office
+    api_keys_result = await db.execute(
+        select(ApiKey).filter(ApiKey.office_id == office.id, ApiKey.is_active == True)
+    )
+    api_keys = api_keys_result.scalars().all()
+    for key in api_keys:
+        key.is_active = False
+    
+    # 5. Archive the office
+    office.is_archived = True
+    office.archived_at = now
+    office.archived_by = current_user.id
+    
+    await db.commit()
+    
+    return archive_schemas.ArchiveOfficeResponse(
+        success=True,
+        office_id=office.id,
+        office_name=office.name,
+        archived_at=now,
+        users_archived=users_archived_count,
+        message=f"Office '{office.name}' and {users_archived_count} users have been archived."
+    )
