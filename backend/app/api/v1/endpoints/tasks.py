@@ -59,6 +59,18 @@ async def read_patient_tasks(
     result = await db.execute(select(Task).filter(Task.patient_id == patient_id, Task.office_id == tenant_id))
     return result.scalars().all()
 
+@router.get("/{task_id}", response_model=schemas.TaskResponse)
+async def read_task(
+    task_id: UUID, 
+    db: AsyncSession = Depends(get_db),
+    tenant_id: str = Depends(get_current_tenant_id)
+):
+    result = await db.execute(select(Task).filter(Task.id == task_id, Task.office_id == tenant_id))
+    task = result.scalars().first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
 @router.put("/{task_id}", response_model=schemas.TaskResponse)
 @router.patch("/{task_id}", response_model=schemas.TaskResponse)
 async def update_task(
