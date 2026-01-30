@@ -14,6 +14,8 @@ class Patient(Base):
     first_name = Column(String, nullable=False) # Encrypted in app
     last_name = Column(String, nullable=False)  # Encrypted in app
     last_name_hash = Column(String, index=True, nullable=False) # Blind Index for search
+    first_name_hash = Column(String(64), index=True, nullable=True) # Blind Index for first name search
+    phone_hash = Column(String(64), index=True, nullable=True) # Blind Index for phone search
     dob = Column(Date, nullable=False)
     contact_info = Column(JSONB, nullable=True) # Encrypted JSON
     medical_history = Column(JSONB, nullable=True) # Allergies, Meds (JSON)

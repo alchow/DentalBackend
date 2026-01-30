@@ -16,6 +16,7 @@ class VisitBase(BaseModel):
     reason: Optional[str] = None
     status: VisitStatus = VisitStatus.SCHEDULED
     summary: Optional[dict] = None
+    duration_minutes: Optional[int] = 30  # Default 30 min appointment
     patient_id: UUID
 
 class VisitCreate(VisitBase):
@@ -26,6 +27,7 @@ class VisitUpdate(BaseModel):
     reason: Optional[str] = None
     status: Optional[VisitStatus] = None
     summary: Optional[dict] = None
+    duration_minutes: Optional[int] = None
 
 class VisitResponse(VisitBase):
     id: UUID

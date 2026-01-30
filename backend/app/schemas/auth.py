@@ -65,3 +65,24 @@ class ApiKeyResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+# --- Password Reset ---
+class AdminPasswordResetRequest(BaseModel):
+    """Admin requests a reset link for a user"""
+    user_email: EmailStr
+
+class AdminPasswordResetResponse(BaseModel):
+    """Returns reset link for admin to share with user"""
+    reset_token: str
+    reset_link: str
+    expires_in_minutes: int = 60
+    user_email: str
+
+class PasswordResetRequest(BaseModel):
+    """User resets their password using the token"""
+    token: str
+    new_password: str
+
+class PasswordResetResponse(BaseModel):
+    success: bool
+    message: str

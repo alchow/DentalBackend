@@ -40,13 +40,37 @@ def get_api_key_hash(api_key: str) -> str:
 # --- JWT Token ---
 ALGORITHM = "HS256"
 
-def create_access_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
+def create_access_token(
+    subject: Union[str, Any], 
+    expires_delta: timedelta = None,
+    token_type: str = "access"
+) -> str:
+    """
+    Create a JWT token.
+    
+    Args:
+        subject: The subject (usually user ID)
+        expires_delta: Token expiration time
+        token_type: Type of token ('access' or 'password_reset')
+    """
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    to_encode = {"exp": expire, "sub": str(subject)}
+    to_encode = {
+        "exp": expire, 
+        "sub": str(subject),
+        "type": token_type
+    }
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+
+def decode_token(token: str) -> dict:
+    """
+    Decode and validate a JWT token.
+    
+    Returns the payload dict or raises an exception if invalid.
+    """
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])

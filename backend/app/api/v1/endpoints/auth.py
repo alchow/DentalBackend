@@ -208,3 +208,109 @@ async def archive_office(
         users_archived=users_archived_count,
         message=f"Office '{office.name}' and {users_archived_count} users have been archived."
     )
+
+
+# --- Password Reset ---
+RESET_TOKEN_EXPIRE_MINUTES = 60  # 1 hour
+
+@router.post("/admin-reset-password", response_model=schemas.AdminPasswordResetResponse)
+async def admin_reset_password(
+    request: schemas.AdminPasswordResetRequest,
+    current_user: User = Depends(deps.get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    Admin generates a password reset link for a user in their office.
+    Only ADMIN users can perform this action.
+    """
+    # 1. Check if user is ADMIN
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=403,
+            detail="Only ADMIN users can generate password reset links"
+        )
+    
+    # 2. Find the target user (must be in same office)
+    result = await db.execute(
+        select(User).filter(
+            User.email == request.user_email,
+            User.office_id == current_user.office_id,
+            User.is_archived == False
+        )
+    )
+    target_user = result.scalars().first()
+    
+    if not target_user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found in your office"
+        )
+    
+    # 3. Generate reset token (JWT with short expiry)
+    reset_token = security.create_access_token(
+        subject=str(target_user.id),
+        expires_delta=timedelta(minutes=RESET_TOKEN_EXPIRE_MINUTES),
+        token_type="password_reset"
+    )
+    
+    # 4. Build reset link (frontend URL)
+    # Frontend should have a route like /reset-password?token=xxx
+    reset_link = f"https://app.example.com/reset-password?token={reset_token}"
+    
+    return schemas.AdminPasswordResetResponse(
+        reset_token=reset_token,
+        reset_link=reset_link,
+        expires_in_minutes=RESET_TOKEN_EXPIRE_MINUTES,
+        user_email=request.user_email
+    )
+
+
+@router.post("/reset-password", response_model=schemas.PasswordResetResponse)
+async def reset_password(
+    request: schemas.PasswordResetRequest,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    User resets their password using a valid reset token.
+    No authentication required - token validates the request.
+    """
+    try:
+        # 1. Decode and validate the reset token
+        payload = security.decode_token(request.token)
+        
+        # 2. Verify it's a password reset token (not a regular access token)
+        if payload.get("type") != "password_reset":
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid reset token"
+            )
+        
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Invalid reset token")
+        
+        # 3. Find the user
+        result = await db.execute(
+            select(User).filter(User.id == user_id, User.is_archived == False)
+        )
+        user = result.scalars().first()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # 4. Update password
+        user.hashed_password = security.get_password_hash(request.new_password)
+        await db.commit()
+        
+        return schemas.PasswordResetResponse(
+            success=True,
+            message="Password has been reset successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid or expired reset token"
+        )

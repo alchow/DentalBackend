@@ -21,7 +21,7 @@ import uuid
 import json
 
 # Configuration
-BASE_URL = "https://dental-backend-963321342744.us-central1.run.app/api/v1"
+BASE_URL = "https://dental-backend-2iw4ademaa-uc.a.run.app/api/v1"
 TEST_EMAIL = f"test-{uuid.uuid4().hex[:8]}@example.com"
 TEST_PASSWORD = "TestPassword123!"
 
