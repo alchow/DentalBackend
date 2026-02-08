@@ -41,7 +41,7 @@ spec:
         - name: DB_USER
           value: dental_user
         - name: DB_PASS
-          value: 4NNLUORbtL!vWRtLec6X1
+          value: "REDACTED"
         - name: DB_HOST
           value: /cloudsql/dentaldb-482716:us-central1:dentaldb
         - name: DB_PORT
@@ -49,9 +49,9 @@ spec:
         - name: DB_NAME
           value: dental_db
         - name: ENCRYPTION_KEY
-          value: 57VtU9YMXIPsKg9sAG9ntf_uj7UNnBgxl6QJ-6dXJIo=
+          value: "REDACTED"
         - name: SECRET_KEY
-          value: 389680bb3760fddd3aabb9f420d661534cfb309bd09b689f36f7baf7a0ab39b3
+          value: "REDACTED"
         image: gcr.io/dentaldb-482716/dental-backend
         ports:
         - containerPort: 8080

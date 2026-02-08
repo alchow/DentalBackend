@@ -1,0 +1,91 @@
+/* NoteTypeSelector.module.css */
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: 2px solid transparent;
+    background-color: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.chip:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chip:hover:not(:disabled) {
+    filter: brightness(0.95);
+}
+
+.selected {
+    border-color: currentColor;
+    /* Uses the text color for border */
+    box-shadow: var(--shadow-sm);
+    font-weight: var(--font-weight-bold);
+}
+
+/* Type-specific Colors */
+
+.complaint {
+    background-color: #fef3c7;
+    /* Amber 100 */
+    color: #92400e;
+    /* Amber 800 */
+}
+
+.finding {
+    background-color: #dbeafe;
+    /* Blue 100 */
+    color: #1e40af;
+    /* Blue 800 */
+}
+
+.treatment {
+    background-color: #d1fae5;
+    /* Emerald 100 */
+    color: #065f46;
+    /* Emerald 800 */
+}
+
+.concern {
+    background-color: #fce7f3;
+    /* Pink 100 */
+    color: #9d174d;
+    /* Pink 800 */
+}
+
+.followup {
+    background-color: #e0e7ff;
+    /* Indigo 100 */
+    color: #3730a3;
+    /* Indigo 800 */
+}
+
+.phone {
+    background-color: #f3e8ff;
+    /* Purple 100 */
+    color: #6b21a8;
+    /* Purple 800 */
+}
+
+.lab {
+    background-color: #cffafe;
+    /* Cyan 100 */
+    color: #155e75;
+    /* Cyan 800 */
+}

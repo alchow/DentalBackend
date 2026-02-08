@@ -20,7 +20,9 @@ steps:
       - 'managed'
       - '--add-cloudsql-instances'
       - 'dentaldb-482716:us-central1:dentaldb'
-      - '--set-env-vars'
+      - '--update-env-vars'
       - 'DB_HOST=/cloudsql/dentaldb-482716:us-central1:dentaldb,DB_TYPE=postgres,DB_USER=dental_user,DB_NAME=dental_db'
+      - '--update-secrets'
+      - 'DB_PASS=DB_PASS:latest,SECRET_KEY=SECRET_KEY:latest,ENCRYPTION_KEY=ENCRYPTION_KEY:latest,OPENAI_API_KEY=OPENAI_API_KEY:latest,INTERNAL_API_KEY=INTERNAL_API_KEY:latest'
 images:
   - 'gcr.io/$PROJECT_ID/dental-backend'

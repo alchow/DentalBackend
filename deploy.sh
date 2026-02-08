@@ -22,20 +22,8 @@ PROJECT_ID="dentaldb-482716" # Hardcoded correct project ID
 #     exit 1
 # fi
 
+
 echo "Deploying $APP_NAME to project $PROJECT_ID in $REGION..."
-
-# Generate Secrets if not provided
-SECRET_KEY=$(openssl rand -hex 32)
-# Generate a valid Fernet key (requires cryptography or manual base64 encoding of 32 random bytes)
-# We can use python for this if available, or openssl + base64
-if command -v python3 &> /dev/null; then
-    ENCRYPTION_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
-else
-    # Fallback to OpenSSL (32 bytes -> base64)
-    ENCRYPTION_KEY=$(openssl rand -base64 32)
-fi
-
-echo "Generated temporary SECRET_KEY and ENCRYPTION_KEY for deployment."
 
 # 1. Enable APIs (Skipping to avoid permission errors if already enabled)
 # echo "Enabling necessary APIs..."
@@ -49,7 +37,10 @@ echo "Building container image..."
 gcloud builds submit --tag gcr.io/$PROJECT_ID/$APP_NAME . --project $PROJECT_ID
 
 # 3. Deploy to Cloud Run
+# 3. Deploy to Cloud Run
 echo "Deploying to Cloud Run..."
+# Use --update-env-vars to avoid overwriting existing secrets (DB_PASS, SECRET_KEY, etc.)
+# unless they are explicitly provided here.
 gcloud run deploy $APP_NAME \
     --image gcr.io/$PROJECT_ID/$APP_NAME \
     --project $PROJECT_ID \
@@ -57,13 +48,8 @@ gcloud run deploy $APP_NAME \
     --platform managed \
     --allow-unauthenticated \
     --port 8080 \
-    --set-env-vars DB_TYPE=postgres \
-    --set-env-vars DB_USER=postgres \
-    --set-env-vars DB_HOST=localhost \
-    --set-env-vars DB_PORT=5432 \
-    --set-env-vars DB_NAME=dental_db \
-    --set-env-vars ENCRYPTION_KEY="$ENCRYPTION_KEY" \
-    --set-env-vars SECRET_KEY="$SECRET_KEY"
+    --add-cloudsql-instances dentaldb-482716:us-central1:dentaldb \
+    --update-env-vars DB_TYPE=postgres,DB_USER=dental_user,DB_HOST=/cloudsql/dentaldb-482716:us-central1:dentaldb,DB_PORT=5432,DB_NAME=dental_db
 
 echo "Deployment successful!"
 echo "Next steps:"

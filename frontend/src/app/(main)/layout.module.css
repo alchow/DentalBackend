@@ -1,0 +1,25 @@
+/* Main layout styles */
+
+.container {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    background-color: var(--color-bg-secondary);
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    /* This container will hold the ListPanel + DetailPanel 
+     which are typically rendered by the page.tsx */
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column-reverse;
+        /* Nav at bottom for mobile */
+    }
+}

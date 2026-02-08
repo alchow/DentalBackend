@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text
+from sqlalchemy import Column, String, DateTime, ForeignKey, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -24,6 +24,7 @@ class Note(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     office_id = Column(UUID(as_uuid=True), ForeignKey("offices.id"), nullable=True)
+    is_backfilled = Column(Boolean, default=False, nullable=False)
 
     patient = relationship("Patient", back_populates="notes")
     visit = relationship("Visit", back_populates="notes")

@@ -107,3 +107,34 @@ async def get_current_user(
     if user.is_archived:
         raise HTTPException(status_code=403, detail="This user account has been archived")
     return user
+
+
+async def require_api_key_only(
+    db: AsyncSession = Depends(get_db),
+    x_office_key: str = Security(api_key_header)
+) -> str:
+    """
+    Requires API key authentication. Rejects Bearer tokens.
+    Used for backfill operations that should only be available to system integrations.
+    Returns the office_id (UUID).
+    """
+    if not x_office_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Backfill requires X-Office-Key authentication. Bearer tokens are not accepted."
+        )
+    
+    api_key_hash = security.get_api_key_hash(x_office_key)
+    result = await db.execute(select(ApiKey).filter(ApiKey.key_hash == api_key_hash))
+    api_key_obj = result.scalars().first()
+    
+    if not api_key_obj or not api_key_obj.is_active:
+        raise HTTPException(status_code=401, detail="Invalid Office Key")
+    
+    # Check if Office is archived
+    office_result = await db.execute(select(Office).filter(Office.id == api_key_obj.office_id))
+    office = office_result.scalars().first()
+    if office and office.is_archived:
+        raise HTTPException(status_code=403, detail="This office has been archived")
+    
+    return api_key_obj.office_id

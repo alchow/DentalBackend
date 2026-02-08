@@ -60,7 +60,10 @@ class SearchService:
         
         # 2. Generate & Save Blind Indexes
         # Delete old indexes for this note
-        await self.db.execute(text(f"DELETE FROM blind_indexes WHERE note_id = '{note_id}'"))
+        await self.db.execute(
+            text("DELETE FROM blind_indexes WHERE note_id = :note_id"),
+            {"note_id": str(note_id)}
+        )
         
         term_hashes = self._tokenize_and_hash(content)
         for h in term_hashes:

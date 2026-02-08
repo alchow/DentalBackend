@@ -25,7 +25,14 @@ class Patient(Base):
     
     office_id = Column(UUID(as_uuid=True), ForeignKey("offices.id"), nullable=True) # made nullable for migration
     is_active = Column(Boolean, default=True)
+    is_backfilled = Column(Boolean, default=False, nullable=False)
+    
+    # SSN fields for patient identification
+    ssn_encrypted = Column(String, nullable=True)  # Full SSN encrypted with Fernet
+    ssn_hash = Column(String(64), index=True, nullable=True)  # Blind index for full SSN
+    last_4_ssn_hash = Column(String(64), index=True, nullable=True)  # Blind index for last-4
 
     visits = relationship("Visit", back_populates="patient")
     notes = relationship("Note", back_populates="patient")
     bills = relationship("Bill", back_populates="patient")
+    summaries = relationship("PatientSummary", back_populates="patient")

@@ -16,3 +16,6 @@ cryptography==42.0.7
 openai>=1.0.0
 pgvector>=0.2.0
 greenlet
+google-cloud-secret-manager==2.16.0
+google-auth==2.22.0
+google-cloud-tasks>=2.14.0

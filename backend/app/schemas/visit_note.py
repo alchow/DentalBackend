@@ -15,7 +15,6 @@ class VisitBase(BaseModel):
     visit_date: datetime
     reason: Optional[str] = None
     status: VisitStatus = VisitStatus.SCHEDULED
-    summary: Optional[dict] = None
     duration_minutes: Optional[int] = 30  # Default 30 min appointment
     patient_id: UUID
 
@@ -26,7 +25,6 @@ class VisitUpdate(BaseModel):
     visit_date: Optional[datetime] = None
     reason: Optional[str] = None
     status: Optional[VisitStatus] = None
-    summary: Optional[dict] = None
     duration_minutes: Optional[int] = None
 
 class VisitResponse(VisitBase):
@@ -65,3 +63,53 @@ class NoteResponse(NoteBase):
 
     class Config:
         from_attributes = True
+
+
+# --- Pagination & Extended Schemas (Added 2026-01-31) ---
+
+class PatientEmbed(BaseModel):
+    """Lightweight patient info for embedding in note responses."""
+    id: UUID
+    first_name: str
+    last_name: str
+    dob: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class NoteWithPatient(NoteResponse):
+    """Note response with optional embedded patient data."""
+    patient: Optional[PatientEmbed] = None
+
+
+class NoteListResponse(BaseModel):
+    """Paginated response for note list endpoint."""
+    items: list
+    total: int
+    limit: int
+    offset: int
+
+
+# --- Note History Schemas (Added 2026-02-01) ---
+
+class NoteHistoryItem(BaseModel):
+    """A single version from note edit history."""
+    id: UUID
+    previous_content: str  # Decrypted at API layer
+    edited_by: Optional[str] = None
+    change_reason: Optional[str] = None
+    created_at: datetime
+    tooth_number: Optional[str] = None
+    surface_ids: Optional[str] = None
+    area_of_oral_cavity: Optional[str] = None
+    note_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class NoteHistoryListResponse(BaseModel):
+    """Response for GET /notes/{id}/history endpoint."""
+    items: list[NoteHistoryItem]
+    total: int

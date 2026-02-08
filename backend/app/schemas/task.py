@@ -10,6 +10,7 @@ class TaskBase(BaseModel):
     due_date: Optional[date] = None
     patient_id: UUID
     generated_by: Optional[str] = None
+    assignee_type: str = "DENTIST"  # DENTIST, PATIENT, FRONT_DESK
 
 class TaskCreate(TaskBase):
     pass
@@ -19,6 +20,7 @@ class TaskUpdate(BaseModel):
     status: Optional[str] = None
     priority: Optional[str] = None
     due_date: Optional[date] = None
+    assignee_type: Optional[str] = None
 
 class TaskResponse(TaskBase):
     id: UUID

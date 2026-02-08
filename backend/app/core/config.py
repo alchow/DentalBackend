@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import PostgresDsn, computed_field
+from pydantic import PostgresDsn, computed_field, model_validator
 from typing import Optional
 
 import os
@@ -9,13 +9,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Dental Notes Backend"
     API_V1_STR: str = "/api/v1"
     BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:8080", "http://localhost:3000"]
-    API_KEY: str = os.getenv("API_KEY", "secret-key") # Change in production
     OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY") # Required for Search
     
     # JWT Settings
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-super-secret-key-change-it")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8 # 8 days
-    
     
     # Allow DB_* env vars to override defaults (Cloud Run style)
     POSTGRES_SERVER: str = os.getenv("DB_HOST", "localhost")
@@ -24,6 +22,17 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = os.getenv("DB_NAME", "dental_notes")
     POSTGRES_PORT: int = int(os.getenv("DB_PORT", 5432))
     
+    @model_validator(mode="after")
+    def _check_secrets(self):
+        allow_insecure = os.getenv("ALLOW_INSECURE_DEFAULTS", "").lower() == "true"
+        if not self.SECRET_KEY and not allow_insecure:
+            raise ValueError(
+                "SECRET_KEY is not set. Set it in your environment or "
+                "set ALLOW_INSECURE_DEFAULTS=true for local development."
+            )
+        if not self.SECRET_KEY and allow_insecure:
+            self.SECRET_KEY = "dev-only-insecure-key-do-not-use-in-prod"
+        return self
 
     @computed_field
     def SQLALCHEMY_DATABASE_URI(self) -> str:

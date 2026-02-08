@@ -8,8 +8,20 @@ import os
 from app.core.config import settings
 
 # --- Data Encryption (Fernet) ---
-DEV_KEY = os.getenv("ENCRYPTION_KEY", "mNDwH60iN1a1xkB6-oJR4lHJ5-dxc-mQII86XXdQC90=")
-fernet = Fernet(DEV_KEY)
+_INSECURE_DEFAULT_KEY = "mNDwH60iN1a1xkB6-oJR4lHJ5-dxc-mQII86XXdQC90="
+_allow_insecure = os.getenv("ALLOW_INSECURE_DEFAULTS", "").lower() == "true"
+
+_encryption_key = os.getenv("ENCRYPTION_KEY")
+if not _encryption_key:
+    if _allow_insecure:
+        _encryption_key = _INSECURE_DEFAULT_KEY
+    else:
+        raise RuntimeError(
+            "ENCRYPTION_KEY is not set. Set it in your environment or "
+            "set ALLOW_INSECURE_DEFAULTS=true for local development."
+        )
+
+fernet = Fernet(_encryption_key)
 
 def encrypt_data(data: str) -> str:
     if not data: return data
@@ -23,6 +35,57 @@ def get_blind_index(data: str) -> str:
     """Deterministic hash for searching"""
     if not data: return None
     return hashlib.sha256(data.lower().encode()).hexdigest()
+
+
+def compute_blind_index(data: str) -> str:
+    """Alias for get_blind_index for consistency with imports"""
+    return get_blind_index(data)
+
+
+# --- SSN Utilities ---
+import re
+
+def parse_ssn_input(ssn: str) -> tuple:
+    """
+    Parse SSN input and return (full_ssn_digits, last_4).
+    
+    Input: "123-45-6789" → ("123456789", "6789")
+    Input: "123456789" → ("123456789", "6789")
+    Input: "6789" → (None, "6789")
+    Input: None or "" → (None, None)
+    
+    Returns: (full_ssn, last_4) tuple
+    """
+    if not ssn:
+        return (None, None)
+    
+    # Remove dashes, spaces
+    digits = re.sub(r'[\s\-]', '', ssn)
+    
+    if len(digits) == 9:
+        # Full SSN
+        return (digits, digits[-4:])
+    elif len(digits) == 4 and digits.isdigit():
+        # Last 4 only
+        return (None, digits)
+    else:
+        # Invalid format
+        return (None, None)
+
+
+def mask_ssn(last_4: str) -> str:
+    """Return masked SSN display: '***-**-1234'"""
+    if not last_4 or len(last_4) != 4:
+        return None
+    return f"***-**-{last_4}"
+
+
+def validate_ssn_format(ssn: str) -> bool:
+    """Validate SSN format (full or last-4)"""
+    if not ssn:
+        return True  # Optional field
+    digits = re.sub(r'[\s\-]', '', ssn)
+    return len(digits) == 9 or len(digits) == 4
 
 # --- Password & API Key Hashing ---
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

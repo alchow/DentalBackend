@@ -85,7 +85,7 @@ async def update_visit(
     db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_current_tenant_id)
 ):
-    """Update visit status, reason, date, or summary."""
+    """Update visit status, reason, date, or duration."""
     result = await db.execute(
         select(Visit).filter(
             Visit.id == visit_id, 
@@ -103,8 +103,8 @@ async def update_visit(
         db_visit.reason = visit_update.reason
     if visit_update.status is not None:
         db_visit.status = visit_update.status
-    if visit_update.summary is not None:
-        db_visit.summary = visit_update.summary
+    if visit_update.duration_minutes is not None:
+        db_visit.duration_minutes = visit_update.duration_minutes
 
     await db.commit()
     await db.refresh(db_visit)

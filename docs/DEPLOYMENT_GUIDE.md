@@ -101,6 +101,8 @@ gcloud run deploy dental-backend \
 | `DB_PASS` | (secret) | Database password |
 | `ENCRYPTION_KEY` | (secret) | Fernet key for PII encryption |
 | `SECRET_KEY` | (secret) | JWT signing key |
+| `OPENAI_API_KEY` | (secret) | OpenAI API key for LLM/embeddings |
+| `INTERNAL_API_KEY` | (secret) | Shared secret for Cloud Tasks internal endpoints |
 
 ### ⚠️ Common Mistake: Wrong DB_USER
 
@@ -130,7 +132,7 @@ export DB_HOST=127.0.0.1
 export DB_PORT=5432
 export DB_USER=dental_user
 export DB_NAME=dental_db
-export DB_PASS='4NNLUORbtL!vWRtLec6X1'
+export DB_PASS=$(gcloud secrets versions access latest --secret="DB_PASS" --project=dentaldb-482716)
 
 # 3. Activate virtual environment
 source venv/bin/activate

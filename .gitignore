@@ -39,3 +39,4 @@ ENV/
 key.json
 cloud_sql_proxy
 *.log
+service.yaml

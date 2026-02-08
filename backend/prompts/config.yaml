@@ -1,0 +1,6 @@
+# Prompt Configuration
+# This file controls which prompt versions are active
+
+patient_summary:
+  active_version: v2
+  model_override: null  # Use LLM_PROVIDER env var if null

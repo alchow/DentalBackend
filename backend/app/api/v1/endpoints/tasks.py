@@ -24,6 +24,7 @@ async def create_task(
         priority=task.priority,
         due_date=task.due_date,
         generated_by=task.generated_by,
+        assignee_type=task.assignee_type,
         office_id=tenant_id
     )
     db.add(db_task)
@@ -34,16 +35,19 @@ async def create_task(
 @router.get("", response_model=List[schemas.TaskResponse])
 async def list_tasks(
     status: Optional[str] = None,
+    assignee_type: Optional[str] = None,
     limit: int = Query(50, ge=1, le=100, description="Number of items to return"),
     offset: int = Query(0, ge=0, description="Number of items to skip"),
     db: AsyncSession = Depends(get_db),
     tenant_id: str = Depends(get_current_tenant_id)
 ):
-    """List all tasks for the office with optional status filter and pagination."""
+    """List all tasks for the office with optional status/assignee_type filter and pagination."""
     query = select(Task).filter(Task.office_id == tenant_id)
     
     if status:
         query = query.filter(Task.status == status)
+    if assignee_type:
+        query = query.filter(Task.assignee_type == assignee_type)
     
     query = query.order_by(Task.created_at.desc()).offset(offset).limit(limit)
     result = await db.execute(query)
@@ -92,6 +96,8 @@ async def update_task(
         db_task.priority = task_update.priority
     if task_update.due_date:
         db_task.due_date = task_update.due_date
+    if task_update.assignee_type:
+        db_task.assignee_type = task_update.assignee_type
 
     await db.commit()
     await db.refresh(db_task)

@@ -17,6 +17,7 @@ class Task(Base):
     priority = Column(String, nullable=False, default='NORMAL') # HIGH, NORMAL
     due_date = Column(Date, nullable=True)
     generated_by = Column(String, nullable=True) # LLM or User
+    assignee_type = Column(String, nullable=False, default='DENTIST')  # DENTIST, PATIENT, FRONT_DESK
     
     created_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc))
